@@ -2,50 +2,77 @@
 
 import { FormEvent, useState } from 'react';
 
-type FormState = {
-  companyName: string;
-  businessEmail: string;
-  useCase: string;
-  complianceNeeds: string;
-};
-
-const initialState: FormState = {
-  companyName: '',
-  businessEmail: '',
-  useCase: '',
-  complianceNeeds: '',
-};
+type SubmissionState =
+  | { type: 'idle' }
+  | { type: 'success'; message: string }
+  | { type: 'error'; message: string };
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState<FormState>(initialState);
+  const [submissionState, setSubmissionState] = useState<SubmissionState>({
+    type: 'idle',
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+
+  async function parseResponseMessage(response: Response): Promise<string | undefined> {
+    const contentType = response.headers.get('content-type') ?? '';
+
+    if (contentType.includes('application/json')) {
+      try {
+        const payload = (await response.json()) as { message?: string };
+        return payload.message;
+      } catch {
+        return undefined;
+      }
+    }
+
+    const text = await response.text();
+    return text.trim() ? text.trim() : undefined;
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
     setIsSubmitting(true);
-    setMessage(null);
-    setError(null);
+    setSubmissionState({ type: 'idle' });
 
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          company: formData.get('company'),
+          useCase: formData.get('useCase'),
+          securityRequirements: formData.get('securityRequirements'),
+          timeline: formData.get('timeline'),
+          website: formData.get('website'),
+        }),
       });
 
-      const result = (await response.json()) as { message?: string; error?: string };
+      const message = await parseResponseMessage(response);
 
       if (!response.ok) {
-        setError(result.error ?? 'Request failed. Please try again.');
+        setSubmissionState({
+          type: 'error',
+          message: message ?? 'Submission failed. Please try again.',
+        });
         return;
       }
 
-      setMessage(result.message ?? 'Thanks. We will reach out within one business day.');
-      setFormData(initialState);
+      setSubmissionState({
+        type: 'success',
+        message:
+          message ??
+          'Thanks—your request is in. We will respond with next steps shortly.',
+      });
+      form.reset();
     } catch {
-      setError('Network error. Please retry in a moment.');
+      setSubmissionState({
+        type: 'error',
+        message: 'We could not submit your request due to a network error. Please retry.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -54,60 +81,53 @@ export default function ContactPage() {
   return (
     <section className="container section">
       <p className="eyebrow">Contact</p>
-      <h1>Book your private LLM consultation</h1>
-      <p className="lead">
-        Tell us your security and business priorities. We will send a proposed plan and
-        timeline.
-      </p>
+      <h1>Project qualification</h1>
+      <p className="lead">Share your goals so we can scope the fastest path to launch and ROI.</p>
 
       <form className="form card" onSubmit={handleSubmit}>
         <label>
-          Company name
-          <input
-            required
-            value={formData.companyName}
-            onChange={(event) => setFormData((prev) => ({ ...prev, companyName: event.target.value }))}
-          />
-        </label>
-
-        <label>
-          Business email
-          <input
-            required
-            type="email"
-            value={formData.businessEmail}
-            onChange={(event) => setFormData((prev) => ({ ...prev, businessEmail: event.target.value }))}
-          />
+          Company
+          <input name="company" required minLength={2} maxLength={120} />
         </label>
 
         <label>
           Primary use case
+          <textarea name="useCase" required minLength={20} maxLength={1500} rows={4} />
+        </label>
+
+        <label>
+          Security requirements
           <textarea
+            name="securityRequirements"
             required
-            rows={4}
-            value={formData.useCase}
-            onChange={(event) => setFormData((prev) => ({ ...prev, useCase: event.target.value }))}
+            minLength={5}
+            maxLength={1000}
+            rows={3}
           />
         </label>
 
         <label>
-          Compliance and security needs
-          <textarea
-            required
-            rows={3}
-            value={formData.complianceNeeds}
-            onChange={(event) =>
-              setFormData((prev) => ({ ...prev, complianceNeeds: event.target.value }))
-            }
-          />
+          Target timeline
+          <input name="timeline" required minLength={2} maxLength={120} />
         </label>
 
-        <button className="button buttonPrimary" disabled={isSubmitting} type="submit">
-          {isSubmitting ? 'Submitting...' : 'Request Consultation'}
+        <input
+          name="website"
+          autoComplete="off"
+          tabIndex={-1}
+          aria-hidden="true"
+          style={{ position: 'absolute', left: '-9999px' }}
+        />
+
+        <button className="button buttonPrimary" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Submit qualification'}
         </button>
 
-        {message ? <p className="successText">{message}</p> : null}
-        {error ? <p className="errorText">{error}</p> : null}
+        {submissionState.type !== 'idle' ? (
+          <p className={submissionState.type === 'success' ? 'successText' : 'errorText'}>
+            {submissionState.message}
+          </p>
+        ) : null}
       </form>
     </section>
   );
