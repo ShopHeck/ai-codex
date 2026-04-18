@@ -124,6 +124,12 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : "Unable to process request.";
 
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { message: "Malformed JSON request body." },
+        { status: 400 },
+      );
+    }
     const isValidationError =
       message.includes("must be between") ||
       message === "Invalid request payload." ||
