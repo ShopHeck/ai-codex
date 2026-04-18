@@ -1,38 +1,20 @@
-import Link from "next/link";
-
-const projects = [
-  {
-    title: "Lead Intake Automation",
-    result: "Cut qualification time by 72% with webhook-first triage.",
-  },
-  {
-    title: "Subscription Analytics Dashboard",
-    result: "Increased expansion revenue by 19% using churn-risk alerts.",
-  },
-];
+import ProjectCard from '@/components/portfolio/ProjectCard';
+import { portfolioProjects } from '@/lib/site-data';
 
 export default function PortfolioPage() {
   return (
-    <main className="container">
-      <section className="card">
-        <h1>Portfolio</h1>
-        <p>Productized systems built for measurable ROI.</p>
-        <ul>
-          {projects.map((project) => (
-            <li key={project.title}>
-              <strong>{project.title}</strong>: {project.result}
-            </li>
-          ))}
-        </ul>
-        <div className="actions">
-          <Link href="/contact" className="button">
-            Book Your Build Sprint
-          </Link>
-          <Link href="/" className="button secondary">
-            Back Home
-          </Link>
-        </div>
-      </section>
-    </main>
+    <section className="container section">
+      <p className="eyebrow">Case Studies</p>
+      <h1>Proven results for security-sensitive businesses</h1>
+      <p className="lead">
+        Examples of private LLM systems we delivered for teams where confidentiality,
+        compliance, and uptime matter.
+      </p>
+      <div className="grid cards2">
+        {portfolioProjects.map((project) => (
+          <ProjectCard key={project.title} project={project} />
+        ))}
+      </div>
+    </section>
   );
 }
