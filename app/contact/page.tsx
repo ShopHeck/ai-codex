@@ -13,7 +13,7 @@ export default function ContactPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const form = event.currentTarget;
