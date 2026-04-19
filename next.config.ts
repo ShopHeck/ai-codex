@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
   output: 'export',
   trailingSlash: true,
   basePath,
-  assetPrefix: basePath || undefined,
+  ...(basePath ? { assetPrefix: basePath } : {}),
 };
 
 export default nextConfig;

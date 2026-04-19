@@ -20,21 +20,12 @@ export default function ContactPage() {
 
     setIsSubmitting(true);
     setSubmissionState({ type: 'idle' });
-
-    try {
-      setSubmissionState({
-        type: 'success',
-        message: 'Thanks—GitHub Pages preview mode is enabled and the form is display-only.',
-      });
-      form.reset();
-    } catch {
-      setSubmissionState({
-        type: 'error',
-        message: 'Submission is unavailable in GitHub Pages preview mode.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setSubmissionState({
+      type: 'success',
+      message: 'This form is in preview mode. No data has been submitted.',
+    });
+    form.reset();
+    setIsSubmitting(false);
   }
 
   return (
